@@ -13,46 +13,7 @@
 
 <body>
 
-  <nav class="navbar navbar-expand-lg bg-body-tertiary">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#"><img src="{{ url_for('static', filename='images/icons8-beach-50.png') }}" alt="moveit brand icon" height="30"> Trippy</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/">Home</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link"  href="/about">About</a>
-          </li>        
-          <li class="nav-item">
-            <a class="nav-link" href="/#city-section">City</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link"  href="/contact">Contact Us</a>
-          </li>         
-        </ul>
-      <ul class="navbar-nav ml-auto">
-        {% if current_user.is_authenticated %}
-            <li class="nav-item">
-                <a class="btn btn-outline-primary" href="#">Hi, {{ current_user.name }}</a>
-            </li>
-        {% else %}
-            <li class="nav-item">
-                <a class="btn btn-outline-primary" href="{{ url_for('login') }}">Login</a>
-            </li>
-        {% endif %}
-        <li class="nav-item">
-          <a class="btn btn-outline-danger" href="{{ url_for('logout') }}">Log Out</a>
-        </li>
-    </ul>
-    
-      </div>
-    </div>
-  </nav>
+  {% include 'navbar.html' %}
 
     <div class="container mt-5">
 
@@ -74,26 +35,26 @@
         <div class="col-md-6">
 
           <h1 class="mb-4">Contact with us</h1>
-            <form id="contact_form" name="contact_form" method="post" style="max-width: 600px;">
+            <form id="contact_form" name="contact_form" method="post" action="/contact" style="max-width: 600px;">
                 <div class="mb-5 row">
                     <div class="col">
                         <label>Name</label>
-                        <input type="text" required maxlength="50" class="form-control" id="first_name" name="first_name">
+                        <input type="text" required maxlength="50" class="form-control" id="name" name="name">
                     </div>
                     <div class="col">
                         <label>Surname</label>
-                        <input type="text" required maxlength="50" class="form-control" id="last_name" name="last_name">
+                        <input type="text" required maxlength="50" class="form-control" id="surname" name="surname">
                     </div>
                 </div>
                 <div class="mb-5 row">
                     <div class="col">
-                        <label for="email_addr">Email</label>
-                        <input type="email" required maxlength="50" class="form-control" id="email_addr" name="email"
+                        <label for="email">Email</label>
+                        <input type="email" required maxlength="50" class="form-control" id="email" name="email"
                             placeholder="name@example.com">
                     </div>
                     <div class="col">
-                        <label for="phone_input">Phone</label>
-                        <input type="tel" required maxlength="50" class="form-control" id="phone_input" name="Phone"
+                        <label for="phone">Phone</label>
+                        <input type="tel" required maxlength="50" class="form-control" id="phone" name="phone"
                             placeholder="Phone">
                     </div>
                 </div>
@@ -116,39 +77,8 @@
 
   </div>
   <div id="contact-section" class="container">
-    <footer class="row row-cols-1 row-cols-sm-2 row-cols-md-5 py-5 my-5 border-top">
-      <div class="col mb-3">
-        <a href="/" class="d-flex align-items-center mb-3 link-body-emphasis text-decoration-none">
-          <svg class="bi me-2" width="40" height="32">
-            <use xlink:href="#bootstrap"></use>
-          </svg>
-        </a>
-        <p class="text-body-secondary">© 2024</p>
-      </div>
-      <div class="col mb-3">
-      </div>
-      <div class="col mb-3">
-        <h5>Phone Number</h5>
-        <ul class="nav flex-column">
-          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">05424218536</a></li>
-          
-        </ul>
-      </div>
-      <div class="col mb-3">
-        <h5>Social Media </h5>
-        <ul class="nav flex-column">
-          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 text-body-secondary">Twitter</a></li>
-          
-        </ul>
-      </div>
-      <div class="col mb-3">
-        <h5>E-mail</h5>
-        <ul class="nav flex-column">
-          <li class="nav-item mb-2"><a href="/contact"  class="nav-link p-0 text-body-secondary">Email</a></li>
-          
-        </ul>
-      </div>
-    </footer>
+    {% include 'footer.html' %}
+
   </div>
 
   <script src="{{ url_for('static', filename='js/contact.js') }}"></script>
@@ -158,3 +88,4 @@
 </body>
 
 </html>
+

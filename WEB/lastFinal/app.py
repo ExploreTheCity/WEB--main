@@ -18,6 +18,10 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadTimeSignat
 from flask_wtf import FlaskForm
 from wtforms import TextAreaField, FileField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, NumberRange
+from flask import abort
+from sqlalchemy.orm import contains_eager
+
+
 
 app = Flask(__name__)
 
@@ -97,6 +101,24 @@ class Comment(db.Model):
     photo_url = db.Column(db.String(255))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     rating = db.Column(db.Integer, nullable=False)
+
+class ContactMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(100))
+    message = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Notebook(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    city_id = db.Column(db.Integer, db.ForeignKey('city.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+
+    user = db.relationship('User', backref='notebooks')
+    city = db.relationship('City', backref='notebooks')
+
+
     
 
 # Create all tables
@@ -109,6 +131,9 @@ admin = Admin(app, name='Admin Panel', template_mode='bootstrap3')
 admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(City, db.session))
 admin.add_view(ModelView(Comment, db.session))
+admin.add_view(ModelView(ContactMessage, db.session ))
+admin.add_view(ModelView(Notebook, db.session))
+
 
 # Define routes and views
 @login_manager.user_loader
@@ -172,23 +197,79 @@ def index():
 
     if request.method == 'POST':
         if request.form.get('recommendation_button') == 'yes':
-            # Şehir listesini al
             cities = City.query.all()
-            # Rasgele bir şehir seç
             recommended_city = choice(cities)
-            # Seçilen şehrin ismini flash mesajı olarak göster
             flash(f"We recommend visiting {recommended_city.city_name}!", 'info')
             return redirect(url_for('index'))
         
-        search_term = request.form.get('destination_city')
-        if search_term:
-            cities = City.query.filter(City.city_name.ilike(f'%{search_term}%')).all()
-        else:
-            cities = City.query.all()
+        if request.form.get('selected_city'):
+            selected_city_id = request.form.get('selected_city')
+            return redirect(url_for('create_route', city_id=selected_city_id))
+
+    search_term = request.form.get('destination_city')
+    if search_term:
+        cities = City.query.filter(City.city_name.ilike(f'%{search_term}%')).all()
     else:
         cities = City.query.all()
 
     return render_template('index.html', cities=cities, admin_button_visible=admin_button_visible)
+
+
+@app.route('/create_route/<city_id>', methods=['GET', 'POST'])
+@login_required  # Kullanıcının giriş yapmış olmasını sağlar
+def create_route(city_id):
+    if request.method == 'POST':
+        activities = request.form.get('activities')
+        city = City.query.get(city_id)
+        if city:
+            # Rotanın oluşturulacağı işlemleri yapabilirsiniz
+            flash(f"Route created successfully for {city.city_name}!", 'success')
+            flash(f"Activities: {activities}", 'info')
+
+            # Create Notebook entry
+            content = f"Route for {city.city_name}: {activities}"
+            new_notebook = Notebook(user_id=current_user.id, city_id=city_id, content=content)
+            db.session.add(new_notebook)
+            db.session.commit()
+            
+        else:
+            flash("City not found!", 'error')
+        
+        return redirect(url_for('index'))
+
+    city = City.query.get(city_id)
+    if city:
+        # Kullanıcının kendi notlarını al
+        user_notebooks = Notebook.query.join(City).filter(
+            Notebook.user_id == current_user.id,
+            Notebook.city_id == city_id
+        ).all()
+        return render_template('create_route.html', city=city, user_notebooks=user_notebooks)
+    else:
+        flash("City not found!", 'error')
+        return redirect(url_for('index'))
+
+
+
+@app.route('/notebook', methods=['GET', 'POST'])
+@login_required
+def notebook():
+    if request.method == 'POST':
+        # Kullanıcı bir not defteri oluşturduğunda
+        content = request.form.get('content')
+
+        if content:
+            new_notebook = Notebook(user_id=current_user.id, content=content)
+            db.session.add(new_notebook)
+            db.session.commit()
+            flash('Notebook created successfully!', 'success')
+            return redirect(url_for('notebook'))
+
+    # GET isteği geldiğinde, kullanıcının mevcut not defterlerini göster
+    user_notebooks = current_user.notebooks
+    return render_template('create_route.html', notebooks=user_notebooks)
+
+
 
 
 # Define a function to handle file uploads
@@ -301,6 +382,35 @@ def update_profile():
         db.session.commit()
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile'))
+    
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        message = request.form.get('message')
+
+        if not name or not email or not message:
+            flash('Please fill out all fields.', 'error')
+            return redirect(url_for('contact'))
+
+        # Save the message to the database
+        new_message = ContactMessage(name=name, email=email, message=message)
+        db.session.add(new_message)
+        db.session.commit()
+
+        # E-posta gönderme işlemi
+        msg = Message(subject='Contact Form Submission',
+                      sender=email,
+                      recipients=['your-email@example.com'])
+        msg.body = f'Name: {name}\nEmail: {email}\nMessage: {message}'
+        mail.send(msg)
+
+
+
+    return render_template("contact.html", thank_you=False)
+
 
 
 @app.route('/login', methods=["GET", "POST"])
@@ -374,28 +484,7 @@ app.config['MAIL_PASSWORD'] = 'Zeynep12345.'
 
 mail = Mail(app)
 
-@app.route('/contact', methods=['GET', 'POST'])
-def contact():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        message = request.form.get('message')
 
-        if not name or not email or not message:
-            flash('Please fill out all fields.', 'error')
-            return redirect(url_for('contact'))
-
-        # E-posta gönderme işlemi
-        msg = Message(subject='Contact Form Submission',
-                      sender=email,
-                      recipients=['your-email@example.com'])
-        msg.body = f'Name: {name}\nEmail: {email}\nMessage: {message}'
-        mail.send(msg)
-
-        flash('Your message has been sent successfully. We will get back to you soon!', 'success')
-        return render_template('contact.html', thank_you=True)
-
-    return render_template("contact.html", thank_you=False)
 
 
 if __name__ == '__main__':

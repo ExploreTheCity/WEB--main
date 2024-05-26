@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italianno&display=swap">
   <link href="{{ url_for('static', filename='css/city_detail.css') }}" rel="stylesheet">
-  <title>Şehirler</title>
+  <title>{{ city.city_name }}</title>
 </head>
-
 <body>
   {% include 'navbar.html' %}
-
   <div class="container mt-3">
     <div class="row">
       <div class="col-md-12 text-center city-name">
@@ -24,7 +21,7 @@
     </div>
     <div class="row city-image-container">
       <div class="col-md-6">
-        <img id="cityImage" src="{{ city.image_url }}" alt="Sehir Resmi" class="img-fluid hotel-image">
+        <img id="cityImage" src="{{ city.image_url }}" alt="Şehir Resmi" class="img-fluid hotel-image">
       </div>
     </div>
     <div class="row">
@@ -38,39 +35,110 @@
     <hr>
     <div id="Description" class="row">
       <div class="col-md-6 text-center">
-        <div class="explore-info">
-          <h4>Cultural Places</h4>
-          <p>{{ city.cultural_places }}</p>
+        {% if city.cultural_places %}
+        <div class="col-md-6">
+          <div class="explore-info">
+            <h4>Cultural Places</h4>
+            <ul>
+              {% for cultural_place in city.cultural_places.split('\n') %}
+                <li>{{ cultural_place }}</li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
+        {% endif %}
       </div>
       <div class="col-md-6 text-center">
-        <div class="explore-info">
-          <h4>Bars</h4>
-          <p>{{ city.bars }}</p>
+        {% if city.bars %}
+        <div class="col-md-6">
+          <div class="explore-info">
+            <h4>Bars</h4>
+            <ul>
+              {% for bar in city.bars.split('\n') %}
+                <li>{{ bar }}</li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
+        {% endif %}
       </div>
       <div class="col-md-6 text-center">
-        <div class="explore-info">
-          <h4>Touristic Places</h4>
-          <p>{{ city.tourist_attractions }}</p>
+        {% if city.tourist_attractions %}
+        <div class="col-md-6">
+          <div class="explore-info">
+            <h4>Touristic Places</h4>
+            <ul>
+              {% for tourist_attraction in city.tourist_attractions.split('\n') %}
+                <li>{{ tourist_attraction }}</li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
+        {% endif %}
       </div>
       <div class="col-md-6 text-center">
-        <div class="explore-info">
-          <h4>Restaurants</h4>
-          <p>{{ city.restaurants }}</p>
+        {% if city.restaurants %}
+        <div class="col-md-6">
+          <div class="explore-info">
+            <h4>Restaurants</h4>
+            <ul>
+              {% for restaurant in city.restaurants.split('\n') %}
+                <li>{{ restaurant }}</li>
+              {% endfor %}
+            </ul>
+          </div>
         </div>
+        {% endif %}
       </div>
-      {% if city.places_of_interest %}
+      {% if city.transportation %}
       <div class="col-md-12 text-center">
         <div class="explore-info">
-          <h4>Places of Interest</h4>
-          <p>{{ city.places_of_interest }}</p>
-        </div>
+          <h4>Transportation</h4>
+          <ul style="list-style-type: disc; text-align: left; padding-left: 20px;">
+            {% for transportation in city.transportation.split('\n') %}
+              <li>{{ transportation }}</li>
+            {% endfor %}
+          </ul>
+        </div> 
       </div>
       {% endif %}
+      
+      {% if city.places_of_interest %}
+      <div class="col-md-12">
+        <div class="explore-info">
+          <h4>Places of Interest</h4>
+          <ul>
+            {% for place_of_interest in city.places_of_interest.split('\n') %}
+              <li>{{ place_of_interest }}</li>
+            {% endfor %}
+          </ul>
+        </div> 
+      </div>
+      {% endif %}
+      
     </div>
-
+    
+    <!-- Accommodation Section -->
+    <hr>
+    <div id="Accommodation" class="row">
+      <div class="col-md-8">
+        <div class="explore-info">
+          <h4>Accommodation</h4>
+          <p>For accommodation suggestions, you can consider the following options:</p>
+          <ul>
+            {% for place in city.accommodation.split('\n') %}
+              <li>{{ place }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="explore-info">
+          <p>Alternatively, you can search for places to stay in {{ city.city_name }} on Trivago using the link below:</p>
+          <a href="{{ city.trivago_link }}" target="_blank" class="btn btn-primary">Search for Accommodation</a>
+        </div>
+      </div>
+    </div>
     <div class="container mt-3">
       <div data-bs-spy="scroll" id="Comments" class="row scrollspy-example">
         <div class="col-md-12 text-center">
@@ -111,21 +179,19 @@
       </div>
     </div>
   </div>
-
-  <div id="harita-container" class="row">
-    <div class="col-md-12 text-center">
-        <h4>Harita</h4>
-        <div id="map">
-            Harita yükleniyor...
-        </div>
-    </div>
-    <button id="showRouteButton" class="btn btn-primary">Rota Göster</button>
-
-</div>    
-
-  {% include 'footer.html' %}
-
 </div>
+
+<div id="harita-container" class="row">
+  <div class="col-md-12 text-center">
+    <h4>Harita</h4>
+    <div id="map">
+      Harita yükleniyor...
+    </div>
+  </div>
+  <button id="showRouteButton" class="btn btn-primary">Rota Göster</button>
+</div>
+
+{% include 'footer.html' %}
 
 <script src="{{ url_for('static', filename='js/city_detail.js') }}"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBSk0bKJzNNPaIqd6EmsSrWOdibBbmt00c&libraries=places&callback=initMap" async defer></script>
@@ -133,5 +199,5 @@
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
-
 </html>
+

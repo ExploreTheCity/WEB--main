@@ -80,6 +80,13 @@ class City(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     places_of_interest = db.Column(db.Text)  
+    accommodation = db.Column(db.Text)  # Konaklayacak yerler için ek alan
+    trivago_link = db.Column(db.String(255))  # Trivago linki için ek alan
+    transportation = db.Column(db.Text)  # Ulaşım bilgileri için ek alan
+
+
+
+
 
     
 
@@ -325,6 +332,8 @@ def city_detail(city_id):
 
     average_rating = city.average_rating()
     return render_template('city_detail.html', city=city, comments=comments, form=form, average_rating=average_rating)
+
+
 
 
 @app.route('/city_recommendation', methods=['POST'])

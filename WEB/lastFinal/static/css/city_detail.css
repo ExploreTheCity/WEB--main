@@ -51,10 +51,10 @@ padding-top: 20px;
 }
 
 #map {
-    height: 400px;
     width: 100%;
-    margin-top: 20px; /* Harita ile rota göster butonu arasında boşluk bırak */
-}
+    height: 400px; /* veya istediğiniz bir yükseklik */
+  }
+  
 
 #showRouteButton {
     margin-top: 20px; /* Rota göster butonu ile footer arasında boşluk bırak */

@@ -1,59 +1,69 @@
+mapboxgl.accessToken = 'pk.eyJ1Ijoic2V6YWkzNSIsImEiOiJjbHdub3Q2cjAxdW5wMmpteTdtZ2htcDVwIn0.Tt6d8m6LRzkeavcYQ_AGYw';
+
 function initMap() {
   const cityLat = parseFloat('{{ city.latitude }}');
   const cityLng = parseFloat('{{ city.longitude }}');
 
-  const mapOptions = {
-    center: { lat: cityLat, lng: cityLng },
-    zoom: 12,
-  };
+  mapboxgl.accessToken = 'pk.eyJ1Ijoic2V6YWkzNSIsImEiOiJjbHdub3Q2cjAxdW5wMmpteTdtZ2htcDVwIn0.Tt6d8m6LRzkeavcYQ_AGYw';
 
-  const mapElement = document.getElementById('map');
-  
-  if (!mapElement) {
-    console.error("Map element not found.");
-    return;
-  }
-
-  const map = new google.maps.Map(mapElement, mapOptions);
-
-  const marker = new google.maps.Marker({
-    position: { lat: cityLat, lng: cityLng },
-    map: map,
-    title: '{{ city.city_name }}'
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [cityLng, cityLat],
+    zoom: 12
   });
 
-  document.addEventListener('DOMContentLoaded', function() {
-    const showRouteButton = document.getElementById('showRouteButton');
-  
-    showRouteButton.addEventListener('click', function() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const yourLat = position.coords.latitude;
-          const yourLng = position.coords.longitude;
-          
-          const directionsService = new google.maps.DirectionsService();
-          const directionsRenderer = new google.maps.DirectionsRenderer();
-          directionsRenderer.setMap(map);
-          
-          const request = {
-              origin: { lat: yourLat, lng: yourLng },
-              destination: { lat: cityLat, lng: cityLng },
-              travelMode: 'DRIVING'
-          };
-  
-          directionsService.route(request, function(response, status) {
-              if (status === 'OK') {
-                  directionsRenderer.setDirections(response);
-              } else {
-                  window.alert('Directions request failed due to ' + status);
+  new mapboxgl.Marker()
+    .setLngLat([cityLng, cityLat])
+    .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('{{ city.city_name }}'))
+    .addTo(map);
+
+  document.getElementById('showRouteButton').addEventListener('click', function() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const yourLat = position.coords.latitude;
+        const yourLng = position.coords.longitude;
+
+        const directionsRequest = `https://api.mapbox.com/directions/v5/mapbox/driving/${yourLng},${yourLat};${cityLng},${cityLat}?access_token=${mapboxgl.accessToken}`;
+        fetch(directionsRequest)
+          .then(response => response.json())
+          .then(data => {
+            const route = data.routes[0].geometry.coordinates;
+            const geojson = {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: route
               }
+            };
+
+            if (map.getSource('route')) {
+              map.getSource('route').setData(geojson);
+            } else {
+              map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: {
+                  type: 'geojson',
+                  data: geojson
+                },
+                layout: {
+                  'line-join': 'round',
+                  'line-cap': 'round'
+                },
+                paint: {
+                  'line-color': '#888',
+                  'line-width': 8
+                }
+              });
+            }
           });
-        });
-      } else {
-        window.alert('Your browser does not support geolocation.');
-      }
-    });
+      });
+    } else {
+      window.alert('Your browser does not support geolocation.');
+    }
   });
 }
 
-initMap();
+document.addEventListener('DOMContentLoaded', initMap); // Sayfa yüklendiğinde haritayı başlat

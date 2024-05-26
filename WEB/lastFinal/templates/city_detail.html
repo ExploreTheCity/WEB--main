@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italianno&display=swap">
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css' rel='stylesheet' />
   <link href="{{ url_for('static', filename='css/city_detail.css') }}" rel="stylesheet">
   <title>{{ city.city_name }}</title>
 </head>
@@ -308,19 +308,58 @@
 <div id="harita-container" class="row">
   <div class="col-md-12 text-center">
     <h4>Harita</h4>
-    <div id="map">
+    <div id="map" style="height: 500px;">
       Harita yükleniyor...
     </div>
   </div>
   <button id="showRouteButton" class="btn btn-primary">Rota Göster</button>
 </div>
+</div>
 
 {% include 'footer.html' %}
 
-<script src="{{ url_for('static', filename='js/city_detail.js') }}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBSk0bKJzNNPaIqd6EmsSrWOdibBbmt00c&libraries=places&callback=initMap" async defer></script>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js'></script>
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1Ijoic2V6YWkzNSIsImEiOiJjbHdub3Q2cjAxdW5wMmpteTdtZ2htcDVwIn0.Tt6d8m6LRzkeavcYQ_AGYw';
+
+  function initMap() {
+    const cityLat = parseFloat('{{ city.latitude }}');
+    const cityLng = parseFloat('{{ city.longitude }}');
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [cityLng, cityLat],
+      zoom: 12
+    });
+
+    new mapboxgl.Marker()
+      .setLngLat([cityLng, cityLat])
+      .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('{{ city.city_name }}'))
+      .addTo(map);
+
+      document.getElementById('showRouteButton').addEventListener('click', function() {
+    const cityLat = parseFloat('{{ city.latitude }}');
+    const cityLng = parseFloat('{{ city.longitude }}');
+    
+    const numberOfPoints = 3; // İşaretlenecek nokta sayısı
+    const maxOffset = 0.02; // Noktaların maksimum konum ofseti
+    
+    for (let i = 0; i < numberOfPoints; i++) {
+      const randomLng = cityLng + (Math.random() - 0.5) * maxOffset;
+      const randomLat = cityLat + (Math.random() - 0.5) * maxOffset;
+
+      new mapboxgl.Marker()
+        .setLngLat([randomLng, randomLat])
+        .addTo(map);
+    }
+  });
+  }
+
+  document.addEventListener('DOMContentLoaded', initMap);
+</script>
 </body>
 </html>

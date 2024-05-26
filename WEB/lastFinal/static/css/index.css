@@ -33,3 +33,6 @@
 .recommendation-button {
   margin-bottom: 20px; /* Adjust the value as needed */
 }
+.blur-background {
+  filter: blur(5px);
+}

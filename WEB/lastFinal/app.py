@@ -20,6 +20,7 @@ from wtforms import TextAreaField, FileField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, NumberRange
 from flask import abort
 from sqlalchemy.orm import contains_eager
+import requests  # Bu satır eklenmeli
 
 
 
@@ -299,6 +300,17 @@ class CommentForm(FlaskForm):
     rating = IntegerField('Rate the City:', validators=[DataRequired(), NumberRange(min=1, max=5)])
     submit = SubmitField('Submit')
 
+def get_weather(city_name):
+    api_key = 'd936c54fa85a929c1fb472e8361f657d'
+    base_url = 'http://api.openweathermap.org/data/2.5/weather'
+    params = {
+        'q': city_name,
+        'appid': api_key,
+        'units': 'metric'
+    }
+    response = requests.get(base_url, params=params)
+    return response.json() if response.status_code == 200 else None
+
 @app.route('/city_detail/<int:city_id>', methods=['GET', 'POST'])
 def city_detail(city_id):
     city = City.query.get_or_404(city_id)
@@ -331,7 +343,11 @@ def city_detail(city_id):
             flash('Please provide a rating between 1 and 5.', 'error')
 
     average_rating = city.average_rating()
-    return render_template('city_detail.html', city=city, comments=comments, form=form, average_rating=average_rating)
+
+    # Get weather data for the city
+    weather_data = get_weather(city.city_name)
+
+    return render_template('city_detail.html', city=city, comments=comments, form=form, average_rating=average_rating, weather=weather_data)
 
 
 
@@ -347,7 +363,6 @@ def city_recommendation():
         flash(f"We recommend visiting {recommended_city.city_name}!", 'info')
         return redirect(url_for('index'))  # Kullanıcıyı ana sayfaya yönlendir
     return redirect(url_for('index'))
-@app.route('/profile', methods=['GET', 'POST'])
 @app.route('/profile', methods=['GET', 'POST'])
 
 @login_required
@@ -483,6 +498,8 @@ def logout():
 @app.route('/about')
 def about():
     return render_template("about_us.html")
+
+
 
 # Flask-Mail setup
 app.config['MAIL_SERVER'] = 'smtp.example.com'

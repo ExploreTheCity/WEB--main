@@ -5,3 +5,5 @@ function openCity() {
   function openLoginPage() {
     window.location.href = 'login.html';
   }
+  
+  

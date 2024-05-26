@@ -92,10 +92,14 @@
           <h5 class="card-title">
             <a href="{{ url_for('city_detail', city_id=city.id) }}">{{ city.city_name }}</a>
           </h5>
-          <p class="card-text">
-            {% if city.city_description|length <= 50 %} {{ city.city_description }} {% else %} {{
-              city.city_description[:50] }}... <a href="{{ url_for('city_detail', city_id=city.id) }}">Read more</a>
-              {% endif %}
+          <p class="card-text description">
+            {% if city.city_description|length <= 50 %}
+              {{ city.city_description }}
+            {% else %}
+              <span class="short-description">{{ city.city_description[:50] }}</span>
+              <span class="full-description" style="display: none;">{{ city.city_description }}</span>
+              <a href="#" class="read-more">Read more</a>
+            {% endif %}
           </p>
           <div class="mt-auto">
             <a href="{{ url_for('city_detail', city_id=city.id) }}" class="btn btn-primary">View</a>
@@ -104,6 +108,35 @@
       </div>
     </div>
     {% endfor %}
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const readMoreLinks = document.querySelectorAll('.read-more');
+
+        readMoreLinks.forEach(link => {
+          link.addEventListener('click', function (event) {
+            event.preventDefault();
+            const shortDescription = this.parentElement.querySelector('.short-description');
+            const fullDescription = this.parentElement.querySelector('.full-description');
+
+            if (shortDescription.style.display === 'none') {
+              // "Read less" linkine tıklandığında kısaltılmış açıklamayı göster
+              shortDescription.style.display = 'inline';
+              fullDescription.style.display = 'none';
+              this.textContent = 'Read more';
+            } else {
+              // "Read more" linkine tıklandığında tam açıklamayı göster
+              shortDescription.style.display = 'none';
+              fullDescription.style.display = 'inline';
+              this.textContent = 'Read less';
+            }
+          });
+        });
+      });
+
+
+    </script>
+    
   </div>
   
   <div id="explore-section" class="container px-4 py-5" id="featured-3">

@@ -228,6 +228,7 @@
   </div>
 </div>
 
+
 <!-- Accommodation Section -->
 <div class="card">
   <div class="card-header" id="headingEight">
@@ -240,14 +241,17 @@
   <div id="collapseEight" class="collapse" aria-labelledby="headingEight" data-parent="#accordionExample">
     <div class="card-body">
       <p>For accommodation suggestions, you can consider the following options:</p>
+      {% if city.accommodation %}
       <ul>
         {% for place in city.accommodation.split('\n') %}
           <li>{{ place }}</li>
         {% endfor %}
       </ul>
+      {% endif %}
     </div>
   </div>
 </div>
+
 
       
     </div>
@@ -337,26 +341,35 @@
     });
 
     new mapboxgl.Marker()
-      .setLngLat([cityLng, cityLat])
-      .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('{{ city.city_name }}'))
-      .addTo(map);
+    .setLngLat([cityLng, cityLat])
+    .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('{{ city.city_name }}'))
+    .addTo(map);
 
-      document.getElementById('showRouteButton').addEventListener('click', function() {
+
+    document.getElementById('showRouteButton').addEventListener('click', function() {
     const cityLat = parseFloat('{{ city.latitude }}');
     const cityLng = parseFloat('{{ city.longitude }}');
     
     const numberOfPoints = 3; // İşaretlenecek nokta sayısı
     const maxOffset = 0.02; // Noktaların maksimum konum ofseti
     
-    for (let i = 0; i < numberOfPoints; i++) {
-      const randomLng = cityLng + (Math.random() - 0.5) * maxOffset;
-      const randomLat = cityLat + (Math.random() - 0.5) * maxOffset;
+for (let i = 0; i < numberOfPoints; i++) {
+    const randomLng = cityLng + (Math.random() - 0.5) * maxOffset;
+    const randomLat = cityLat + (Math.random() - 0.5) * maxOffset;
 
-      new mapboxgl.Marker()
+    const marker = new mapboxgl.Marker()
         .setLngLat([randomLng, randomLat])
         .addTo(map);
-    }
-  });
+
+    // Rastgele mekan ismini işaretin üzerine ekle
+    const randomIndex = Math.floor(Math.random() * placeNames.length);
+    const placeName = placeNames[randomIndex];
+    const popup = new mapboxgl.Popup({ offset: 25 }).setText(placeName);
+    marker.setPopup(popup);
+}
+
+});
+
   }
 
   document.addEventListener('DOMContentLoaded', initMap);

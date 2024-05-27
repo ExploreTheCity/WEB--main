@@ -24,6 +24,7 @@ import requests  # Bu satır eklenmeli
 
 
 
+
 app = Flask(__name__)
 
 # Flask-Login setup
@@ -310,6 +311,7 @@ def get_weather(city_name):
     }
     response = requests.get(base_url, params=params)
     return response.json() if response.status_code == 200 else None
+
 @app.route('/city_detail/<int:city_id>', methods=['GET', 'POST'])
 def city_detail(city_id):
     city = City.query.get_or_404(city_id)
@@ -317,37 +319,29 @@ def city_detail(city_id):
     form = CommentForm()
 
     if request.method == 'POST':
-        if request.form.get('generate_route_button') == 'yes':
-            activities = generate_random_route(city_id)  # Generate random route
-            if activities:
-                flash(f"Random route generated successfully for {city.city_name}!", 'success')
-                flash(f"Activities: {', '.join(activities)}", 'info')
-            else:
-                flash("City not found!", 'error')
-        elif request.form.get('post_comment_button') == 'yes':
-            if not current_user.is_authenticated:
-                flash('You need to be logged in to post a comment.', 'error')
-                return redirect(url_for('login'))
+        if not current_user.is_authenticated:
+            flash('You need to be logged in to post a comment.', 'error')
+            return redirect(url_for('login'))
 
-            if form.validate_on_submit():
-                comment_text = form.comment_text.data
-                photo = form.photo.data
-                rating = form.rating.data
-                photo_url = save_photo(photo) if photo else None
+        if form.validate_on_submit():
+            comment_text = form.comment_text.data
+            photo = form.photo.data
+            rating = form.rating.data
+            photo_url = save_photo(photo) if photo else None
 
-                new_comment = Comment(
-                    user_id=current_user.id, 
-                    city_id=city_id, 
-                    text=comment_text, 
-                    photo_url=photo_url,
-                    rating=rating
-                )
-                db.session.add(new_comment)
-                db.session.commit()
-                flash('Comment posted successfully.', 'success')
-                return redirect(url_for('city_detail', city_id=city_id))
-            else:
-                flash('Please provide a rating between 1 and 5.', 'error')
+            new_comment = Comment(
+                user_id=current_user.id, 
+                city_id=city_id, 
+                text=comment_text, 
+                photo_url=photo_url,
+                rating=rating
+            )
+            db.session.add(new_comment)
+            db.session.commit()
+            flash('Comment posted successfully.', 'success')
+            return redirect(url_for('city_detail', city_id=city_id))
+        else:
+            flash('Please provide a rating between 1 and 5.', 'error')
 
     average_rating = city.average_rating()
 
@@ -357,20 +351,6 @@ def city_detail(city_id):
     return render_template('city_detail.html', city=city, comments=comments, form=form, average_rating=average_rating, weather=weather_data)
 
 
-def generate_random_route(city_id):
-    city = City.query.get(city_id)
-    if city:
-        activities = generate_random_activities()  # Generate random activities
-        # You can perform further actions here, such as generating route coordinates
-        return activities  # Return the list of random activities
-    else:
-        return None
-
-
-def generate_random_activities():
-    # Rasgele aktiviteler oluştur
-    activities = ['Restoran', 'Bar', 'Turistik Yer', 'Tarihi Yer']
-    return [choice(activities) for _ in range(4)]  # Her bir kategori için rasgele bir aktivite seç
 
 
 @app.route('/city_recommendation', methods=['POST'])
@@ -416,17 +396,22 @@ def update_profile():
         # Update name and email
         current_user.name = request.form['name']
         current_user.email = request.form['email']
-        # Update password if provided
+
+        # Check if new password is provided
         if request.form['new_password']:
-            if current_user.check_password(request.form['current_password']):
-                current_user.set_password(request.form['new_password'])
+            # Check if current password is correct
+            if check_password_hash(current_user.password, request.form['current_password']):
+                # Set new password
+                current_user.password = generate_password_hash(request.form['new_password'], method='pbkdf2:sha256', salt_length=8)
             else:
                 flash('Current password is incorrect.', 'danger')
                 return redirect(url_for('profile'))
+
         # Save changes to the database
         db.session.commit()
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile'))
+
     
 
 @app.route('/contact', methods=['GET', 'POST'])
